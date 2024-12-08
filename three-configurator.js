@@ -9,13 +9,13 @@ const INTERSECTED_COLOR = new THREE.Color(0x00ff00);
 
 // Define default colors for shoe parts
 const basicColors = {
-  "laces": new THREE.Color(0xffffff),   // white
-  "inside": new THREE.Color(0xff0000),   // red
-  "outside_1": new THREE.Color(0x000000), // black
-  "outside_2": new THREE.Color(0xff0000), // red
-  "outside_3": new THREE.Color(0xff0000), // red
-  "sole_top": new THREE.Color(0x888888),  // gray
-  "sole_bottom": new THREE.Color(0x000000) // black
+  "laces": new THREE.Color("#ffffff"),   // white
+  "inside": new THREE.Color("#ff0000"),   // red
+  "outside_1": new THREE.Color("#000000"), // black
+  "outside_2": new THREE.Color("#ff0000"), // red
+  "outside_3": new THREE.Color("#ff0000"), // red
+  "sole_top": new THREE.Color("#888888"),  // gray
+  "sole_bottom": new THREE.Color("#000000") // black
 };
 
 export function initializeCanvas(canvas) {
@@ -127,11 +127,39 @@ export function initializeCanvas(canvas) {
   canvas.addEventListener('mousemove', onMouseMove);
   canvas.addEventListener('click', onMouseClick);
 
-  // Animation loop
+  // Function to log the color of each object in the shoe
+  // Global object to store the shoe colors
+let shoeColors = {};
+
+function logShoeColors() {
+  if (shoeObject) {
+    shoeObject.traverse((child) => {
+      if (child.isMesh) {
+        // Extract color and update global shoeColors object
+        shoeColors[child.name] = child.material.color.getHexString();
+      }
+    });
+  }
+  // Call the function to send data to Vue (via callback or event emitter)
+  sendColorsToVue(shoeColors);
+}
+
+// Callback to update the Vue component
+function sendColorsToVue(colors) {
+  // Check if the callback function is available, then call it
+  if (window.updateColorsFromThree) {
+    window.updateColorsFromThree(colors);
+  }
+}
+
+// Modify the animate loop to include logging
   function animate() {
     requestAnimationFrame(animate);
     controls.update();
     renderer.render(scene, camera);
+    
+    // Log the shoe colors
+    logShoeColors();
   }
   animate();
 }
@@ -148,9 +176,6 @@ function onMouseMove(event) {
 
   // Set up the raycaster (no need to call update)
   raycaster.setFromCamera(mouse, camera);
-
-  // Find the intersections
-  const intersects = raycaster.intersectObject(shoeObject, true);
 }
 
 function onMouseClick(event) {
